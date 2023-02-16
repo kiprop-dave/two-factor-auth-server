@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"time"
 
@@ -82,4 +83,18 @@ func GetUser(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(user)
+}
+
+func DeleteUser(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	id := c.Params("id")
+	// var user models.User
+	filter := bson.M{"userid": id}
+	_, err := usersCollections.DeleteOne(ctx, &filter)
+	if err != nil {
+		log.Print(err.Error())
+	}
+	return c.SendStatus(http.StatusAccepted)
 }
