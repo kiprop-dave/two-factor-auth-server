@@ -4,26 +4,17 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
-	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func ConnectToMongo() *mongo.Client {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Can't find .env file")
-	}
-	uri := os.Getenv("MONGO_URI")
-	if uri == "" {
-		// log.Print("No mongo connection string")
-		log.Fatal("No mongo connection string")
-	}
+	envVariables := EnvVariable
 
 	fmt.Println("connecting to mongo...")
-	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	client, err := mongo.NewClient(options.Client().ApplyURI(envVariables.dbUri))
 	if err != nil {
 		log.Fatal(err.Error())
 	}
