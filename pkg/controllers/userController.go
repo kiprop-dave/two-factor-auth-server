@@ -10,13 +10,15 @@ import (
 	config "github.com/kiprop-dave/2faAuth/pkg/config"
 	models "github.com/kiprop-dave/2faAuth/pkg/models"
 	responses "github.com/kiprop-dave/2faAuth/pkg/responses"
+	utils "github.com/kiprop-dave/2faAuth/pkg/utils"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var usersCollections *mongo.Collection = config.GetCollection(config.DB, "users")
 var validate = validator.New()
 
-func CreateUser(c fiber.Ctx) error {
+func CreateUser(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 
 	var user models.User
@@ -31,4 +33,32 @@ func CreateUser(c fiber.Ctx) error {
 	if valErr := validate.Struct(&user); valErr != nil {
 		return c.Status(400).JSON(responses.Response{Status: 400, Message: "error", Data: &fiber.Map{"data": valErr.Error()}})
 	}
+
+	newUser := models.User{
+		Name:        user.Name,
+		TagId:       user.TagId,
+		PhoneNumber: user.PhoneNumber,
+		UserId:      utils.GenerateUserId(),
+	}
+
+	filter := bson.M{
+		"$or": []bson.M{
+			{"name": newUser.Name},
+			{"tagid": newUser.TagId},
+			{"phonenumber": newUser.PhoneNumber},
+			{"userid": newUser.UserId},
+		},
+	}
+	var conflict models.User
+	confErr := usersCollections.FindOne(ctx, &filter).Decode(&conflict)
+	if confErr == nil {
+		return c.SendStatus(http.StatusConflict)
+	}
+
+	result, err := usersCollections.InsertOne(ctx, newUser)
+	if err != nil {
+		return c.Status(500).JSON(responses.Response{Status: 500, Message: "internal server error", Data: &fiber.Map{"data": err.Error()}})
+	}
+	return c.Status(http.StatusCreated).JSON(responses.Response{Status: http.StatusCreated, Message: "User created", Data: &fiber.Map{"data": result}})
+
 }
