@@ -98,3 +98,45 @@ func DeleteUser(c *fiber.Ctx) error {
 	}
 	return c.SendStatus(http.StatusAccepted)
 }
+
+func UpdateUser(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	id := c.Params("id")
+	var oldUser models.User
+
+	filter := bson.M{"userid": id}
+
+	err := usersCollections.FindOne(ctx, &filter).Decode(&oldUser)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return c.Status(http.StatusNoContent).JSON(responses.Response{Status: 204, Message: "No user"})
+		}
+		log.Print(err.Error())
+	}
+	var newUser models.User
+	if err := c.BodyParser(&newUser); err != nil {
+		return c.Status(400).JSON(responses.Response{Status: 400, Message: "error", Data: &fiber.Map{"data": err.Error()}})
+	}
+
+	if len(newUser.Name) > 0 {
+		oldUser.Name = newUser.Name
+	}
+	if len(newUser.PhoneNumber) > 0 {
+		oldUser.PhoneNumber = newUser.PhoneNumber
+	}
+	if len(newUser.TagId) > 0 {
+		oldUser.TagId = newUser.TagId
+	}
+	update := bson.M{"name": oldUser.Name, "tagid": oldUser.TagId, "phonenumber": oldUser.PhoneNumber}
+	res, er := usersCollections.UpdateOne(ctx, filter, bson.M{"$set": update})
+	if er != nil {
+		log.Panicln(er.Error())
+		return c.SendStatus(http.StatusInternalServerError)
+	}
+	if res.ModifiedCount < 1 {
+		return c.SendStatus(http.StatusNoContent)
+	}
+	return c.Status(200).JSON(responses.Response{Status: 200, Message: "success", Data: &fiber.Map{"user": oldUser}})
+}
