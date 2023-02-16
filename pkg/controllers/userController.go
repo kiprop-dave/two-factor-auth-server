@@ -140,3 +140,26 @@ func UpdateUser(c *fiber.Ctx) error {
 	}
 	return c.Status(200).JSON(responses.Response{Status: 200, Message: "success", Data: &fiber.Map{"user": oldUser}})
 }
+
+func GetAllUsers(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var users []models.User
+	cursor, err := usersCollections.Find(ctx, bson.D{})
+	if err != nil {
+		log.Print("error here")
+		return c.SendStatus(http.StatusInternalServerError)
+	}
+
+	defer cursor.Close(ctx)
+	for cursor.Next(ctx) {
+		var user models.User
+		if err = cursor.Decode(&user); err != nil {
+			log.Print(err.Error())
+			return c.SendStatus(500)
+		}
+		users = append(users, user)
+	}
+	return c.Status(200).JSON(responses.Response{Status: 200, Message: "success", Data: &fiber.Map{"users": users}})
+}
