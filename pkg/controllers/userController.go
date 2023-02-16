@@ -13,6 +13,7 @@ import (
 	utils "github.com/kiprop-dave/2faAuth/pkg/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var usersCollections *mongo.Collection = config.GetCollection(config.DB, "users")
@@ -61,4 +62,24 @@ func CreateUser(c *fiber.Ctx) error {
 	}
 	return c.Status(http.StatusCreated).JSON(responses.Response{Status: http.StatusCreated, Message: "User created", Data: &fiber.Map{"data": result}})
 
+}
+
+func GetUser(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	id := c.Params("id")
+	var user models.User
+
+	filter := bson.M{"userid": id}
+	projection := bson.M{"_id": 0}
+	err := usersCollections.FindOne(ctx, &filter, options.FindOne().SetProjection(projection)).Decode(&user)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return c.SendStatus(http.StatusNoContent)
+		}
+		return c.SendStatus(http.StatusInternalServerError)
+	}
+
+	return c.Status(200).JSON(user)
 }
