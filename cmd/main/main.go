@@ -12,6 +12,7 @@ func main() {
 	app.Use(cors.New())
 
 	routes.UserRoute(app)
+	routes.SensorRoute(app)
 	routes.AuthRoute(app)
 
 	app.Listen(":3000")
