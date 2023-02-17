@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -12,6 +13,7 @@ type EnvVariable struct {
 	AccessToken string
 	TwilioSid   string
 	TwilioToken string
+	PhoneNumber string
 }
 
 func loadEnvVariables() EnvVariable {
@@ -24,11 +26,13 @@ func loadEnvVariables() EnvVariable {
 	twilioToken := os.Getenv("TWILIO_AUTH_TOKEN")
 	twilioPhone := os.Getenv("TWILIO_NUMBER")
 
+	fmt.Println("sms environment", twilioPhone)
+
 	if db == "" || aToken == "" || twilioSid == "" || twilioToken == "" || twilioPhone == "" {
 		log.Fatal("Cant find environment variables")
 	}
 
-	env := EnvVariable{DbUri: db, AccessToken: aToken}
+	env := EnvVariable{DbUri: db, AccessToken: aToken, TwilioSid: twilioSid, TwilioToken: twilioToken, PhoneNumber: twilioPhone}
 	return env
 }
 

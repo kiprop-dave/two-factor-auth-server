@@ -13,6 +13,6 @@ func UserRoute(app *fiber.App) {
 	app.Patch("/user/:id", middle.VerifyToken, controllers.UpdateUser)
 	app.Get("/users", middle.VerifyToken, controllers.GetAllUsers)
 
-	app.Post("/admin", middle.VerifyToken, controllers.CreateAdmin)
+	app.Post("/admin", controllers.CreateAdmin)
 	app.Delete("/admin/:name", middle.VerifyToken, controllers.DeleteAdmin)
 }

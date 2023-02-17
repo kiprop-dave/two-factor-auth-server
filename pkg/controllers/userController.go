@@ -46,9 +46,9 @@ func CreateUser(c *fiber.Ctx) error {
 	filter := bson.M{
 		"$or": []bson.M{
 			{"name": newUser.Name},
-			{"tagid": newUser.TagId},
-			{"phonenumber": newUser.PhoneNumber},
-			{"userid": newUser.UserId},
+			{"tagId": newUser.TagId},
+			{"phoneNumber": newUser.PhoneNumber},
+			{"userId": newUser.UserId},
 		},
 	}
 	var conflict models.User
@@ -72,7 +72,7 @@ func GetUser(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var user models.User
 
-	filter := bson.M{"userid": id}
+	filter := bson.M{"userId": id}
 	projection := bson.M{"_id": 0}
 	err := usersCollections.FindOne(ctx, &filter, options.FindOne().SetProjection(projection)).Decode(&user)
 	if err != nil {
@@ -91,7 +91,7 @@ func DeleteUser(c *fiber.Ctx) error {
 
 	id := c.Params("id")
 	// var user models.User
-	filter := bson.M{"userid": id}
+	filter := bson.M{"userId": id}
 	_, err := usersCollections.DeleteOne(ctx, &filter)
 	if err != nil {
 		log.Print(err.Error())
@@ -106,7 +106,7 @@ func UpdateUser(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var oldUser models.User
 
-	filter := bson.M{"userid": id}
+	filter := bson.M{"userId": id}
 
 	err := usersCollections.FindOne(ctx, &filter).Decode(&oldUser)
 	if err != nil {
@@ -129,7 +129,7 @@ func UpdateUser(c *fiber.Ctx) error {
 	if len(newUser.TagId) > 0 {
 		oldUser.TagId = newUser.TagId
 	}
-	update := bson.M{"name": oldUser.Name, "tagid": oldUser.TagId, "phonenumber": oldUser.PhoneNumber}
+	update := bson.M{"name": oldUser.Name, "tagId": oldUser.TagId, "phoneNumber": oldUser.PhoneNumber}
 	res, er := usersCollections.UpdateOne(ctx, filter, bson.M{"$set": update})
 	if er != nil {
 		log.Panicln(er.Error())
