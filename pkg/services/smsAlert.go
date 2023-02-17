@@ -1,7 +1,6 @@
 package services
 
 import (
-	"fmt"
 	"log"
 
 	config "github.com/kiprop-dave/2faAuth/pkg/config"
@@ -9,18 +8,12 @@ import (
 	twilioApi "github.com/twilio/twilio-go/rest/api/v2010"
 )
 
-var env = config.Environment
-
 func SendSms(target, body string) error {
-	// env := config.Environment
+	env := config.Environment
 	sid := env.TwilioSid
 	token := env.TwilioToken
 	phone := env.PhoneNumber
 
-	fmt.Println(env)
-	// fmt.Println("sms token", phone)
-	// fmt.Println("sms phone", phone)
-	// fmt.Println("sms phone", phone)
 	twilioParams := twilio.ClientParams{
 		Username: sid,
 		Password: token,

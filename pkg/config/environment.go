@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -25,8 +24,6 @@ func loadEnvVariables() EnvVariable {
 	twilioSid := os.Getenv("TWILIO_ACCOUNT_SID")
 	twilioToken := os.Getenv("TWILIO_AUTH_TOKEN")
 	twilioPhone := os.Getenv("TWILIO_NUMBER")
-
-	fmt.Println("sms environment", twilioPhone)
 
 	if db == "" || aToken == "" || twilioSid == "" || twilioToken == "" || twilioPhone == "" {
 		log.Fatal("Cant find environment variables")
