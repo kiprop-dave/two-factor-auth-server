@@ -11,10 +11,10 @@ import (
 )
 
 func ConnectToMongo() *mongo.Client {
-	envVariables := EnvVariable
+	envVariables := Environment
 
 	fmt.Println("connecting to mongo...")
-	client, err := mongo.NewClient(options.Client().ApplyURI(envVariables.dbUri))
+	client, err := mongo.NewClient(options.Client().ApplyURI(envVariables.DbUri))
 	if err != nil {
 		log.Fatal(err.Error())
 	}

@@ -7,12 +7,12 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type envVariable struct {
-	dbUri       string
-	accessToken string
+type EnvVariable struct {
+	DbUri       string
+	AccessToken string
 }
 
-func loadEnvVariables() envVariable {
+func loadEnvVariables() EnvVariable {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("Can't find .env file")
 	}
@@ -23,8 +23,8 @@ func loadEnvVariables() envVariable {
 		log.Fatal("Cant find environment variables")
 	}
 
-	env := envVariable{dbUri: db, accessToken: aToken}
+	env := EnvVariable{DbUri: db, AccessToken: aToken}
 	return env
 }
 
-var EnvVariable envVariable = loadEnvVariables()
+var Environment EnvVariable = loadEnvVariables()
