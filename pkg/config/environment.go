@@ -10,6 +10,8 @@ import (
 type EnvVariable struct {
 	DbUri       string
 	AccessToken string
+	TwilioSid   string
+	TwilioToken string
 }
 
 func loadEnvVariables() EnvVariable {
@@ -18,8 +20,11 @@ func loadEnvVariables() EnvVariable {
 	}
 	db := os.Getenv("MONGO_URI")
 	aToken := os.Getenv("ACCESS_TOKEN")
+	twilioSid := os.Getenv("TWILIO_ACCOUNT_SID")
+	twilioToken := os.Getenv("TWILIO_AUTH_TOKEN")
+	twilioPhone := os.Getenv("TWILIO_NUMBER")
 
-	if db == "" || aToken == "" {
+	if db == "" || aToken == "" || twilioSid == "" || twilioToken == "" || twilioPhone == "" {
 		log.Fatal("Cant find environment variables")
 	}
 
