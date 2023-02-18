@@ -2,12 +2,12 @@ package middleware
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
 	config "github.com/kiprop-dave/2faAuth/pkg/config"
 	controllers "github.com/kiprop-dave/2faAuth/pkg/controllers"
-	"github.com/kiprop-dave/2faAuth/pkg/utils"
 )
 
 var env = config.Environment
@@ -18,8 +18,8 @@ func VerifyToken(c *fiber.Ctx) error {
 	if !ok {
 		return c.SendStatus(http.StatusUnauthorized)
 	}
-	auth := utils.String{Line: authHeader}
-	clientTkn := auth.Split(" ")[1]
+
+	clientTkn := strings.Split(authHeader, " ")[1]
 
 	claims := &controllers.Claims{}
 
