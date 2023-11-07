@@ -1,4 +1,4 @@
-twofa
+bin/
 .env
 
 # Binaries for programs and plugins
