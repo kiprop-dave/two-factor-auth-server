@@ -13,7 +13,7 @@ type TwoFaRegistration struct {
 }
 
 type TwoFaService interface {
-	VerifyCode(secret string, code string) (bool, error)
+	VerifyCode(secret string, code string) bool
 	GenerateTwoFa(email string) (*TwoFaRegistration, error)
 }
 
@@ -29,8 +29,8 @@ func (a *Authy) GenerateTwoFa(email string) (*TwoFaRegistration, error) {
 	return &TwoFaRegistration{Secret: secret, Uri: uri}, nil
 }
 
-func (a *Authy) VerifyCode(secret string, code string) (bool, error) {
+func (a *Authy) VerifyCode(secret string, code string) bool {
 	totp := gotp.NewDefaultTOTP(secret)
 	valid := totp.Verify(code, time.Now().Unix())
-	return valid, nil
+	return valid
 }
