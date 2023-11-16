@@ -42,6 +42,9 @@ func (s *Server) Run() {
 	router.HandleFunc("/user/rfid-check", makeHandler(s.handleUserRfidCheck)).Methods("POST")
 	router.HandleFunc("/user/two-fa", makeHandler(s.handleTwoFa)).Methods("POST")
 
+	router.HandleFunc("/users", makeHandler(s.handleUsers)).Methods("GET")
+	router.HandleFunc("/attempts", makeHandler(s.handleAttempts)).Methods("GET")
+
 	router.HandleFunc("/check-point/register", makeHandler(s.handleCheckPointRegister)).Methods("POST")
 
 	fmt.Println("Listening on port " + s.ServerAddress)
@@ -55,6 +58,22 @@ func makeHandler(fn func(w http.ResponseWriter, r *http.Request) error) http.Han
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 		}
 	}
+}
+
+func (s *Server) handleUsers(w http.ResponseWriter, r *http.Request) error {
+	users, err := s.Store.GetUsers()
+	if err != nil {
+		return WriteError(w, err)
+	}
+	return WriteJSON(w, http.StatusOK, users)
+}
+
+func (s *Server) handleAttempts(w http.ResponseWriter, r *http.Request) error {
+	attempts, err := s.Store.GetEntryAttempts()
+	if err != nil {
+		return WriteError(w, err)
+	}
+	return WriteJSON(w, http.StatusOK, attempts)
 }
 
 func (s *Server) handleAdminLogin(w http.ResponseWriter, r *http.Request) error {
@@ -230,13 +249,18 @@ func (s *Server) handleUserRfidCheck(w http.ResponseWriter, r *http.Request) err
 		}
 		return err
 	}
+	checkpoint, err := s.Store.GetCheckPoint(bson.M{"apiKey": body.ApiKey})
+	if err != nil {
+		return WriteError(w, err)
+	}
 
 	entryAttempt := storage.EntryAttempt{
-		ID:         primitive.NewObjectID(),
-		UserId:     user.ID,
-		TagId:      body.TagId,
-		Time:       time.Now(),
-		Successful: false,
+		ID:           primitive.NewObjectID(),
+		UserId:       user.ID,
+		CheckPointId: checkpoint.ID,
+		TagId:        body.TagId,
+		Time:         time.Now(),
+		Successful:   false,
 	}
 	id, err := s.Store.SaveEntryAttempt(&entryAttempt)
 	if err != nil {

@@ -26,13 +26,21 @@ type User struct {
 	Role        string             `json:"role,omitempty" bson:"role"`
 }
 
+type UserQuery struct {
+	ID    primitive.ObjectID `json:"id,omitempty" bson:"_id"`
+	Email string             `json:"email,omitempty" bson:"email"`
+	TagId string             `json:"tagId,omitempty" bson:"tagId"`
+	Name  string             `json:"name,omitempty" bson:"name"`
+	Role  string             `json:"role,omitempty" bson:"role"`
+}
+
 type EntryAttempt struct {
-	ID     primitive.ObjectID `json:"id" bson:"_id"`
-	UserId primitive.ObjectID `json:"userId" bson:"userId"`
-	//CheckPointId primitive.ObjectID `json:"checkPointId" bson:"checkPointId"`
-	TagId      string    `json:"tagId" bson:"tagId"`
-	Time       time.Time `json:"time" bson:"time"`
-	Successful bool      `json:"successful" bson:"successful"`
+	ID           primitive.ObjectID `json:"id" bson:"_id"`
+	UserId       primitive.ObjectID `json:"userId" bson:"userId"`
+	CheckPointId primitive.ObjectID `json:"checkPointId" bson:"checkPointId"`
+	TagId        string             `json:"tagId" bson:"tagId"`
+	Time         time.Time          `json:"time" bson:"time"`
+	Successful   bool               `json:"successful" bson:"successful"`
 }
 
 type CheckPoint struct {
@@ -45,12 +53,13 @@ type Storage interface {
 	GetUser(bson.M) (*User, error)
 	CreateUser(user *User) error
 	DeleteUser(bson.M) error
-	GetUsers() ([]*User, error)
+	GetUsers() ([]*UserQuery, error)
 	GetEntryAttempts() ([]*EntryAttempt, error)
 	SaveEntryAttempt(entryAttempt *EntryAttempt) (string, error)
 	SaveSuccessfulEntryAttempt(entryAttemptId string) error
 	GetEntryAttempt(id string) (*EntryAttempt, error)
 	CreateCheckPoint(name string) (*CheckPoint, error)
+	GetCheckPoint(query bson.M) (*CheckPoint, error)
 }
 
 type MongoStorage struct {
@@ -141,12 +150,40 @@ func (s *MongoStorage) DeleteUser(bson.M) error {
 	return nil
 }
 
-func (s *MongoStorage) GetUsers() ([]*User, error) {
-	return nil, nil
+func (s *MongoStorage) GetUsers() ([]*UserQuery, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	fields := bson.D{
+		{Key: "password", Value: 0},
+		{Key: "twoFaQrUri", Value: 0},
+		{Key: "twoFaSecret", Value: 0},
+	}
+	opts := options.Find().SetProjection(fields)
+	cursor, err := s.userCollection.Find(ctx, bson.M{}, opts)
+	if err != nil {
+		return nil, err
+	}
+	users := make([]*UserQuery, 0)
+	err = cursor.All(ctx, &users)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
 }
 
 func (s *MongoStorage) GetEntryAttempts() ([]*EntryAttempt, error) {
-	return nil, nil
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	cursor, err := s.entryAttemptCollection.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	attempts := make([]*EntryAttempt, 0)
+	err = cursor.All(ctx, &attempts)
+	if err != nil {
+		return nil, err
+	}
+	return attempts, nil
 }
 
 func (s *MongoStorage) SaveEntryAttempt(entryAttempt *EntryAttempt) (string, error) {
@@ -204,6 +241,20 @@ func (s *MongoStorage) CreateCheckPoint(name string) (*CheckPoint, error) {
 	}
 
 	return &newCheckPoint, nil
+}
+
+func (s *MongoStorage) GetCheckPoint(query bson.M) (*CheckPoint, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	checkPoint := new(CheckPoint)
+	err := s.checkPointCollection.FindOne(ctx, query).Decode(checkPoint)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+	return checkPoint, nil
 }
 
 var ErrConflict = errors.New("conflict")
